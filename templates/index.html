@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能交通管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* 导航栏样式 */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+
+        .nav-links a:hover {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .user-section {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        /* 消息提示样式 */
+        .messages {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1001;
+            max-width: 300px;
+        }
+
+        .message {
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .message.success { background: #4CAF50; }
+        .message.error { background: #f44336; }
+        .message.info { background: #2196F3; }
+        .message.warning { background: #FF9800; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* 主体内容样式 */
+        .hero {
+            text-align: center;
+            padding: 5rem 2rem;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        /* 功能卡片网格 */
+        .features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            flex: 1;
+            min-width: 240px;
+            max-width: 280px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 2rem;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+        }
+
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* 登录注册模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlide 0.3s ease-out;
+        }
+
+        @keyframes modalSlide {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h2 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-footer {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .form-footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s;
+        }
+
+        .close-modal:hover {
+            color: #333;
+        }
+
+        /* 响应式设计 */
+        @media (min-width: 1024px) {
+            .features {
+                gap: 1.5rem;
+            }
+            
+            .feature-card {
+                min-width: 240px;
+                max-width: 260px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            
+            .nav-links {
+                margin-top: 1rem;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+        }
+
+        /* 用户菜单下拉 */
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background: white;
+            min-width: 160px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            border-radius: 8px;
+            z-index: 1;
+            top: 100%;
+            right: 0;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-content a {
+            color: #333;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            border-radius: 0;
+        }
+
+        .dropdown-content a:hover {
+            background: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="logo">骑行路面检测与实时预警系统</div>
+        <div class="nav-links">
+            <a href="#home">首页</a>
+            <a href="#detection">路面检测</a>
+            <a href="#map">路况地图</a>
+            <a href="#analysis">数据分析</a>
+            <a href="#report">危险上报</a>
+        </div>
+        <div class="user-section">
+            {% if session.username %}
+            <div class="dropdown">
+                <a href="#" style="display: flex; align-items: center;">
+                    👤 {{ session.username }} ▼
+                </a>
+                <div class="dropdown-content">
+                    <a href="/logout">退出登录</a>
+                </div>
+            </div>
+            {% else %}
+            <button class="btn" onclick="openModal('login')">登录</button>
+            <button class="btn btn-outline" onclick="openModal('register')">注册</button>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- 消息提示 -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="messages">
+            {% for category, message in messages %}
+            <div class="message {{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- 主体内容 -->
+    <section class="hero" id="home">
+        <h1>智能交通管理系统</h1>
+        <p>基于AI技术的骑行路面检测与预警平台，为骑行者提供安全、可靠的路面信息服务</p>
+        {% if not session.username %}
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <button class="btn" onclick="openModal('login')">立即登录</button>
+            <button class="btn btn-outline" onclick="openModal('register')">免费注册</button>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- 功能模块 -->
+    <section class="features">
+        <div class="feature-card" id="detection">
+            <div class="feature-icon">🔍</div>
+            <h3>实时路面检测与预警</h3>
+            <p>通过AI视觉识别技术，实时检测路面状况，及时发现坑洼、裂缝等道路缺陷，并发出预警通知。</p>
+            {% if session.username %}
+            <a href="/realtime-detection" class="btn">立即体验</a>
+            {% else %}
+            <button class="btn" onclick="openModal('login')">登录体验</button>
+            {% endif %}
+        </div>
+
+        <div class="feature-card" id="map">
+            <div class="feature-icon">🗺️</div>
+            <h3>实时路况查询地图</h3>
+            <p>集成高精度地图服务，实时显示交通流量、拥堵情况、事故信息，提供最优路线规划建议。</p>
+            {% if session.username %}
+            <a href="/map-view" class="btn">查看地图</a>
+            {% else %}
+            <button class="btn" onclick="openModal('login')">登录查看</button>
+            {% endif %}
+        </div>
+
+        <div class="feature-card" id="analysis">
+            <div class="feature-icon">📊</div>
+            <h3>历史数据统计分析</h3>
+            <p>深度挖掘历史交通数据，生成可视化报表，分析交通规律，为决策提供科学依据。</p>
+            {% if session.username %}
+            <a href="/statistics" class="btn">数据分析</a>
+            {% else %}
+            <button class="btn" onclick="openModal('login')">登录分析</button>
+            {% endif %}
+        </div>
+
+        <div class="feature-card" id="report">
+            <div class="feature-icon">⚠️</div>
+            <h3>危险路段上报</h3>
+            <p>公众参与式安全管理，支持用户上报危险路段信息，建立全民共治的交通安全网络。</p>
+            {% if session.username %}
+            <a href="/report" class="btn">我要上报</a>
+            {% else %}
+            <button class="btn" onclick="openModal('login')">登录上报</button>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- 登录模态框 -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('login')">&times;</span>
+            <div class="modal-header">
+                <h2>用户登录</h2>
+                <p>欢迎回到智能交通管理系统</p>
+            </div>
+            <form method="POST" action="/login">
+                <div class="form-group">
+                    <label for="login-username">用户名</label>
+                    <input type="text" id="login-username" name="username" required placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">密码</label>
+                    <input type="password" id="login-password" name="password" required placeholder="请输入密码">
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">登录</button>
+                <div class="form-footer">
+                    <p>演示账号：admin / 123456</p>
+                    <a href="#" onclick="switchModal('login', 'register')">没有账号？立即注册</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 注册模态框 -->
+    <div class="modal" id="register-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('register')">&times;</span>
+            <div class="modal-header">
+                <h2>用户注册</h2>
+                <p>加入智能交通管理系统</p>
+            </div>
+            <form method="POST" action="/register">
+                <div class="form-group">
+                    <label for="reg-username">用户名</label>
+                    <input type="text" id="reg-username" name="username" required placeholder="请输入用户名">
+                </div>
+                <div class="form-group">
+                    <label for="reg-password">密码</label>
+                    <input type="password" id="reg-password" name="password" required placeholder="请输入密码">
+                </div>
+                <div class="form-group">
+                    <label for="reg-confirm">确认密码</label>
+                    <input type="password" id="reg-confirm" name="confirm_password" required placeholder="请再次输入密码">
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">注册</button>
+                <div class="form-footer">
+                    <a href="#" onclick="switchModal('register', 'login')">已有账号？立即登录</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 模态框控制函数
+        function openModal(type) {
+            document.getElementById(type + '-modal').classList.add('active');
+        }
+
+        function closeModal(type) {
+            document.getElementById(type + '-modal').classList.remove('active');
+        }
+
+        function switchModal(from, to) {
+            closeModal(from);
+            openModal(to);
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+
+        // 自动隐藏消息提示
+        setTimeout(function() {
+            const messages = document.querySelectorAll('.message');
+            messages.forEach(msg => {
+                msg.style.opacity = '0';
+                setTimeout(() => msg.remove(), 300);
+            });
+        }, 3000);
+
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

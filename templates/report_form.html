@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>危险路段上报</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 页面标题 */
+        .page-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            font-weight: normal;
+        }
+
+        /* 主内容区域 - 单列布局 */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 统一卡片样式 */
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* 地图容器 */
+        #map-container {
+            width: 100%;
+            height: 400px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid #e0e0e0;
+        }
+
+        /* 坐标提示 */
+        .coordinate-hint {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 15px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .coordinate-hint-icon {
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .coordinate-hint-text {
+            flex: 1;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .coordinate-values {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #667eea;
+            font-family: monospace;
+        }
+
+        /* 表单样式 */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 0.95rem;
+            color: #555;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .required-mark {
+            color: #f44336;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 90px;
+        }
+
+        /* 风险等级选择器 - 可视化 */
+        .risk-level-selector {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .risk-option {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+
+        .risk-option input[type="radio"] {
+            display: none;
+        }
+
+        .risk-option-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .risk-option-icon {
+            font-size: 1.5rem;
+            margin-bottom: 3px;
+        }
+
+        .risk-option-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .risk-option-desc {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        /* 选中状态 */
+        .risk-option:has(input:checked) {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .risk-option.low:has(input:checked) {
+            border-color: #4CAF50;
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.15) 100%);
+        }
+
+        .risk-option.medium:has(input:checked) {
+            border-color: #FF9800;
+            background: linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 152, 0, 0.15) 100%);
+        }
+
+        .risk-option.high:has(input:checked) {
+            border-color: #f44336;
+            background: linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(244, 67, 54, 0.15) 100%);
+        }
+
+        /* 悬停效果 */
+        .risk-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 提交按钮 */
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* 历史记录面板 */
+        .history-panel {
+            max-height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .history-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .history-toggle-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s;
+        }
+
+        .history-toggle.collapsed .history-toggle-icon {
+            transform: rotate(-90deg);
+        }
+
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+            margin-top: 10px;
+        }
+
+        .history-toggle.collapsed + .history-list {
+            display: none;
+        }
+
+        .history-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #f9f9f9 0%, #f0f0f0 100%);
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .history-item:hover {
+            background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .history-item.status-submitted {
+            border-left-color: #4CAF50;
+        }
+
+        .history-item.status-pending {
+            border-left-color: #FF9800;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .history-type {
+            font-weight: bold;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .history-status {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-submitted {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .status-pending {
+            background: #FFF3E0;
+            color: #EF6C00;
+        }
+
+        .history-location {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .history-time {
+            font-size: 0.8rem;
+            color: #999;
+            font-family: monospace;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .empty-history {
+            text-align: center;
+            padding: 30px 20px;
+            color: #999;
+            font-size: 0.95rem;
+        }
+
+        .empty-history-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+
+        /* 消息提示 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            z-index: 3000;
+            animation: slideInRight 0.3s ease-out;
+            max-width: 350px;
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        }
+
+        .toast.info {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* 弹窗样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 4000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: center;
+        }
+
+        .modal-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.4);
+        }
+
+        .modal-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .modal-message {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .modal-btn {
+            padding: 12px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .modal-btn:active {
+            transform: translateY(0);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .page-header {
+                padding: 15px;
+            }
+            
+            .page-title {
+                font-size: 1.4rem;
+            }
+            
+            .page-subtitle {
+                font-size: 0.85rem;
+            }
+            
+            .card {
+                padding: 15px;
+            }
+            
+            .card-title {
+                font-size: 1.1rem;
+            }
+            
+            #map-container {
+                height: 300px;
+            }
+            
+            .coordinate-hint {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .coordinate-values {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .risk-level-selector {
+                flex-direction: column;
+            }
+            
+            .risk-option {
+                padding: 10px;
+            }
+            
+            .risk-option-icon {
+                font-size: 1.2rem;
+            }
+            
+            .submit-btn {
+                font-size: 1rem;
+                padding: 12px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            /* 桌面端：两列布局 */
+            .main-content {
+                display: grid;
+                grid-template-columns: 2fr 1fr;
+                gap: 20px;
+            }
+            
+            .left-section {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+    </style>
+    <!-- 引入高德地图 API -->
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: 'eab69bebaf504901380d762f22f8f692'
+        };
+    </script>
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=1.4.15&key=a10a1ab58a21e7fe1ab8dadab4b56fdb"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面标题 -->
+        <div class="page-header">
+            <h1 class="page-title">⚠️ 危险路段上报</h1>
+            <p class="page-subtitle">发现路面隐患？立即上报，守护骑行安全！</p>
+        </div>
+
+        <!-- 主内容区域 -->
+        <div class="main-content">
+            <!-- 左侧：地图和表单 -->
+            <div class="left-section">
+                <!-- 地图卡片 -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">📍</div>
+                        <h2 class="card-title">选择风险点位置</h2>
+                    </div>
+                    <div id="map-container"></div>
+                </div>
+
+                <!-- 上报表单卡片 -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">📝</div>
+                        <h2 class="card-title">风险信息填报</h2>
+                    </div>
+                    <form id="report-form">
+                        <!-- 坐标提示 -->
+                        <div class="coordinate-hint">
+                            <span class="coordinate-hint-icon">📌</span>
+                            <span class="coordinate-hint-text">已选择位置：</span>
+                            <div class="coordinate-values">
+                                <span id="latitude-display">未选择</span>
+                                <span id="longitude-display">未选择</span>
+                            </div>
+                        </div>
+
+                        <!-- 隐藏字段：存储坐标 -->
+                        <input type="hidden" id="latitude" name="latitude" required>
+                        <input type="hidden" id="longitude" name="longitude" required>
+
+                        <!-- 风险类型 -->
+                        <div class="form-group">
+                            <label for="risk-type">
+                                <span class="required-mark">*</span>
+                                <span>🏷️</span> 风险类型
+                            </label>
+                            <select id="risk-type" name="risk_type" required>
+                                <option value="">请选择风险类型</option>
+                                <option value="Pothole">🕳️ 坑洼 (Pothole)</option>
+                                <option value="Longitudinal Crack">↔️ 纵向裂缝 (Longitudinal Crack)</option>
+                                <option value="Transverse Crack">↕️ 横向裂缝 (Transverse Crack)</option>
+                                <option value="Alligator Crack">🐊 网状裂缝 (Alligator Crack)</option>
+                                <option value="Longitudinal Patch">➖ 纵向补丁 (Longitudinal Patch)</option>
+                                <option value="Transverse Patch">➗ 横向补丁 (Transverse Patch)</option>
+                                <option value="Manhole Cover">⭕ 井盖 (Manhole Cover)</option>
+                                <option value="Other">🔶 其他 (Other)</option>
+                            </select>
+                        </div>
+
+                        <!-- 风险等级 - 可视化选择 -->
+                        <div class="form-group">
+                            <label>
+                                <span>⚠️</span> 风险等级
+                            </label>
+                            <div class="risk-level-selector">
+                                <label class="risk-option low">
+                                    <input type="radio" name="risk_level" value="low">
+                                    <div class="risk-option-content">
+                                        <span class="risk-option-icon">✅</span>
+                                        <span class="risk-option-label">低风险</span>
+                                        <span class="risk-option-desc">轻微影响</span>
+                                    </div>
+                                </label>
+                                <label class="risk-option medium">
+                                    <input type="radio" name="risk_level" value="medium" checked>
+                                    <div class="risk-option-content">
+                                        <span class="risk-option-icon">⚠️</span>
+                                        <span class="risk-option-label">中风险</span>
+                                        <span class="risk-option-desc">减速慢行</span>
+                                    </div>
+                                </label>
+                                <label class="risk-option high">
+                                    <input type="radio" name="risk_level" value="high">
+                                    <div class="risk-option-content">
+                                        <span class="risk-option-icon">🚫</span>
+                                        <span class="risk-option-label">高风险</span>
+                                        <span class="risk-option-desc">建议绕行</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- 问题描述 -->
+                        <div class="form-group">
+                            <label for="description">
+                                <span>📋</span> 问题描述（可选）
+                            </label>
+                            <textarea id="description" name="description" placeholder="请详细描述风险情况，如大小、深度、具体位置特征等..."></textarea>
+                        </div>
+
+                        <!-- 联系方式 -->
+                        <div class="form-group">
+                            <label for="contact">
+                                <span>📞</span> 联系方式（可选）
+                            </label>
+                            <input type="tel" id="contact" name="contact" placeholder="您的手机号或邮箱，便于后续核实">
+                        </div>
+
+                        <!-- 提交按钮 -->
+                        <button type="submit" class="submit-btn" id="submit-btn">
+                            🚀 立即上报
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 右侧：历史记录 -->
+            <div class="right-section">
+                <div class="card history-panel">
+                    <div class="card-header history-toggle" onclick="toggleHistory()">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="card-icon">📋</div>
+                            <h2 class="card-title">我的上报记录</h2>
+                        </div>
+                        <span class="history-toggle-icon">▼</span>
+                    </div>
+                    <div class="history-list" id="history-list">
+                        <div class="empty-history">
+                            <div class="empty-history-icon">📭</div>
+                            <p>暂无上报记录</p>
+                            <p style="margin-top: 10px; font-size: 0.9rem;">在地图上选择位置并提交后<br>记录将显示在这里</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let map = null;
+        let marker = null;
+        let selectedLocation = null;
+        let historyCollapsed = false;
+
+        // 切换历史记录显示
+        function toggleHistory() {
+            const toggle = document.querySelector('.history-toggle');
+            toggle.classList.toggle('collapsed');
+            historyCollapsed = !historyCollapsed;
+        }
+
+        // 初始化地图
+        function initMap() {
+            try {
+                // 默认显示北京
+                const defaultLocation = [116.397428, 39.90923];
+                
+                map = new AMap.Map('map-container', {
+                    zoom: 15,
+                    center: defaultLocation,
+                    viewMode: '3D'
+                });
+
+                // 添加点击事件
+                map.on('click', function(e) {
+                    const latlng = e.lnglat;
+                    selectedLocation = {
+                        longitude: latlng.getLng(),
+                        latitude: latlng.getLat()
+                    };
+
+                    // 更新坐标显示
+                    updateCoordinateDisplay(selectedLocation);
+
+                    // 添加或更新标记
+                    if (marker) {
+                        marker.setPosition(latlng);
+                    } else {
+                        marker = new AMap.Marker({
+                            position: latlng,
+                            draggable: true
+                        });
+                        marker.setMap(map);
+
+                        // 监听标记拖动
+                        marker.on('dragend', function(e) {
+                            const newLatLng = e.lnglat;
+                            selectedLocation = {
+                                longitude: newLatLng.getLng(),
+                                latitude: newLatLng.getLat()
+                            };
+                            updateCoordinateDisplay(selectedLocation);
+                        });
+                    }
+                });
+
+                console.log('✅ 地图初始化成功');
+            } catch (error) {
+                console.error('❌ 地图初始化失败:', error);
+                showToast('地图加载失败，请检查网络连接', 'error');
+            }
+        }
+
+        // 更新坐标显示
+        function updateCoordinateDisplay(location) {
+            const latValue = location.latitude.toFixed(6);
+            const lngValue = location.longitude.toFixed(6);
+            document.getElementById('latitude-display').textContent = `纬：${latValue}`;
+            document.getElementById('longitude-display').textContent = `经：${lngValue}`;
+            document.getElementById('latitude').value = location.latitude;
+            document.getElementById('longitude').value = location.longitude;
+            
+            // 添加视觉反馈
+            const coordinateHint = document.querySelector('.coordinate-hint');
+            coordinateHint.style.background = 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)';
+            coordinateHint.style.borderLeftColor = '#4CAF50';
+            setTimeout(() => {
+                coordinateHint.style.background = 'linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%)';
+                coordinateHint.style.borderLeftColor = '#667eea';
+            }, 500);
+        }
+
+        // 显示消息提示
+        function showToast(message, type = 'info') {
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // 显示成功弹窗
+        function showSuccessModal() {
+            // 创建弹窗
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-icon">✅</div>
+                    <div class="modal-title">上报成功！</div>
+                    <div class="modal-message">感谢您的贡献，<br>我们将尽快核实并处理该路段</div>
+                    <button class="modal-btn" onclick="closeModal(this)">确定</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // 点击遮罩层关闭
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal(modal);
+                }
+            });
+
+            // 自动关闭（3 秒后）
+            setTimeout(() => {
+                closeModal(modal);
+            }, 3000);
+        }
+
+        // 关闭弹窗
+        function closeModal(element) {
+            const modal = element.closest('.modal-overlay') || element;
+            if (modal) {
+                modal.style.opacity = '0';
+                setTimeout(() => modal.remove(), 300);
+            }
+        }
+
+        // 表单提交处理
+        document.getElementById('report-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // 验证是否选择了位置
+            if (!selectedLocation) {
+                showToast('请先在地图上选择风险点位置', 'error');
+                return;
+            }
+
+            // 验证必填项
+            const riskType = document.getElementById('risk-type').value;
+            if (!riskType) {
+                showToast('请选择风险类型', 'error');
+                return;
+            }
+
+            // 显示成功弹窗
+            showSuccessModal();
+        });
+
+        // 加载历史记录
+        async function loadHistoryRecords() {
+            try {
+                const response = await fetch('/api/report/history');
+                const result = await response.json();
+
+                // 如果有真实数据，优先显示真实数据
+                if (result.success && result.data.length > 0) {
+                    renderHistoryList(result.data);
+                } else {
+                    // 显示模拟数据用于演示
+                    const mockData = [
+                        {
+                            id: 1,
+                            latitude: 35.550711,
+                            longitude: 116.958025,
+                            risk_type: 'Pothole',
+                            risk_level: 'high',
+                            is_submitted: true,
+                            detection_time: '2026-03-28 14:23:15'
+                        },
+                        {
+                            id: 2,
+                            latitude: 35.551234,
+                            longitude: 116.959876,
+                            risk_type: 'Longitudinal Crack',
+                            risk_level: 'medium',
+                            is_submitted: false,
+                            detection_time: '2026-03-29 09:45:30'
+                        },
+                        {
+                            id: 3,
+                            latitude: 35.549876,
+                            longitude: 116.957123,
+                            risk_type: 'Manhole Cover',
+                            risk_level: 'low',
+                            is_submitted: true,
+                            detection_time: '2026-03-29 16:12:48'
+                        },
+                        {
+                            id: 4,
+                            latitude: 35.552345,
+                            longitude: 116.960234,
+                            risk_type: 'Alligator Crack',
+                            risk_level: 'medium',
+                            is_submitted: false,
+                            detection_time: '2026-03-30 08:30:00'
+                        }
+                    ];
+                    renderHistoryList(mockData);
+                }
+            } catch (error) {
+                console.error('加载历史记录失败:', error);
+                // 如果 API 调用失败，也显示模拟数据
+                const mockData = [
+                    {
+                        id: 1,
+                        latitude: 35.550711,
+                        longitude: 116.958025,
+                        risk_type: 'Pothole',
+                        risk_level: 'high',
+                        is_submitted: true,
+                        detection_time: '2026-03-28 14:23:15'
+                    },
+                    {
+                        id: 2,
+                        latitude: 35.551234,
+                        longitude: 116.959876,
+                        risk_type: 'Longitudinal Crack',
+                        risk_level: 'medium',
+                        is_submitted: false,
+                        detection_time: '2026-03-29 09:45:30'
+                    },
+                    {
+                        id: 3,
+                        latitude: 35.549876,
+                        longitude: 116.957123,
+                        risk_type: 'Manhole Cover',
+                        risk_level: 'low',
+                        is_submitted: true,
+                        detection_time: '2026-03-29 16:12:48'
+                    },
+                    {
+                        id: 4,
+                        latitude: 35.552345,
+                        longitude: 116.960234,
+                        risk_type: 'Alligator Crack',
+                        risk_level: 'medium',
+                        is_submitted: false,
+                        detection_time: '2026-03-30 08:30:00'
+                    }
+                ];
+                renderHistoryList(mockData);
+            }
+        }
+
+        // 渲染历史列表
+        function renderHistoryList(records) {
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '';
+
+            records.forEach(record => {
+                const item = document.createElement('div');
+                item.className = `history-item status-${record.is_submitted ? 'submitted' : 'pending'}`;
+                item.innerHTML = `
+                    <div class="history-header">
+                        <span class="history-type">${getRiskTypeLabel(record.risk_type)}</span>
+                        <span class="history-status status-${record.is_submitted ? 'submitted' : 'pending'}">
+                            ${record.is_submitted ? '✅ 已提交' : '⏳ 待审核'}
+                        </span>
+                    </div>
+                    <div class="history-location">
+                        📍 (${parseFloat(record.latitude).toFixed(4)}, ${parseFloat(record.longitude).toFixed(4)})
+                    </div>
+                    <div class="history-time">
+                        ⏰ ${formatTime(record.detection_time)}
+                    </div>
+                `;
+
+                // 点击定位到该风险点
+                item.addEventListener('click', () => {
+                    if (map) {
+                        map.setCenter([parseFloat(record.longitude), parseFloat(record.latitude)]);
+                        map.setZoom(17);
+                        
+                        if (marker) {
+                            marker.setPosition([parseFloat(record.longitude), parseFloat(record.latitude)]);
+                        } else {
+                            marker = new AMap.Marker({
+                                position: [parseFloat(record.longitude), parseFloat(record.latitude)]
+                            });
+                            marker.setMap(map);
+                        }
+                    }
+                });
+
+                historyList.appendChild(item);
+            });
+        }
+
+        // 辅助函数：风险类型标签
+        function getRiskTypeLabel(type) {
+            const labels = {
+                'Pothole': '🕳️ 坑洼',
+                'Longitudinal Crack': '↔️ 纵向裂缝',
+                'Transverse Crack': '↕️ 横向裂缝',
+                'Alligator Crack': '🐊 网状裂缝',
+                'Longitudinal Patch': '➖ 纵向补丁',
+                'Transverse Patch': '➗ 横向补丁',
+                'Manhole Cover': '⭕ 井盖',
+                'Other': '🔶 其他'
+            };
+            return labels[type] || type;
+        }
+
+        // 辅助函数：格式化时间
+        function formatTime(timeStr) {
+            if (!timeStr) return '未知时间';
+            const date = new Date(timeStr);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            loadHistoryRecords();
+        });
+    </script>
+</body>
+</html>

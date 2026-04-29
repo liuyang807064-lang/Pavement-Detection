@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>路面风险点地图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* 页面标题 */
+        .page-title {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 主内容区域 */
+        .main-content {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: stretch;
+        }
+
+        /* 地图容器 */
+        .map-wrapper {
+            flex: 1;
+            min-width: 800px;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #container {
+            width: 100%;
+            height: 100%;
+            flex: 1;
+            border-radius: 10px;
+            overflow: hidden;
+            min-height: 500px;
+        }
+
+        /* 信息面板 */
+        .info-panel {
+            width: 350px;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            max-height: 700px;
+        }
+
+        .panel-header {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* 统计信息 */
+        .stats-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* 风险点列表 */
+        .risk-list-section {
+            margin-top: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .risk-list-header {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .risk-list {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 200px;
+        }
+
+        .risk-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .risk-item:hover {
+            background: #f0f0f0;
+            transform: translateX(5px);
+        }
+
+        .risk-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .risk-type {
+            font-weight: bold;
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .risk-id {
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        .risk-location {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .risk-coords {
+            font-size: 0.8rem;
+            color: #999;
+            font-family: monospace;
+        }
+
+        /* 图例 */
+        .legend-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .legend-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .legend-marker {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .map-wrapper {
+                min-width: 100%;
+            }
+
+            .info-panel {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            #container {
+                height: 400px;
+            }
+
+            .map-wrapper {
+                min-width: 100%;
+                padding: 10px;
+            }
+
+            .info-panel {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 页面标题 -->
+        <h1 class="page-title">路面风险点地图</h1>
+
+        <!-- 主内容区域 -->
+        <div class="main-content">
+            <!-- 地图容器 -->
+            <div class="map-wrapper">
+                <div id="container"></div>
+            </div>
+
+            <!-- 信息面板 -->
+            <div class="info-panel">
+                <div class="panel-header">📊 统计信息</div>
+
+                <!-- 统计信息 -->
+                <div class="stats-section">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">总风险点数</span>
+                            <span class="stat-value" id="total-count">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🔴 网状裂痕</span>
+                            <span class="stat-value" id="alligator-count">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🟠 纵向裂痕</span>
+                            <span class="stat-value" id="longitudinal-crack-count">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🟡 纵向修补</span>
+                            <span class="stat-value" id="longitudinal-patch-count">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🔵 井盖</span>
+                            <span class="stat-value" id="manhole-count">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🔴 坑洼</span>
+                            <span class="stat-value" id="pothole-count">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🟠 横向裂缝</span>
+                            <span class="stat-value" id="transverse-crack-count">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🟡 横向修补</span>
+                            <span class="stat-value" id="transverse-patch-count">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 风险点列表 -->
+                <div class="risk-list-section">
+                    <div class="risk-list-header">风险点列表</div>
+                    <div class="risk-list" id="risk-list">
+                        <p style="text-align: center; color: #999; padding: 20px;">加载中...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode:'eab69bebaf504901380d762f22f8f692',
+        }
+    </script>
+
+    <!-- 加载高德地图 API -->
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=1.4.15&key=a10a1ab58a21e7fe1ab8dadab4b56fdb"></script>
+
+    <script>
+        // 等待 DOM 加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('地图页面初始化');
+
+            // 风险类型配置 - 英文到中文的映射
+            const riskTypeConfig = {
+                // 数字类型映射
+                '0': {label: '网状裂痕', color: '#FF6B6B'},
+                '1': {label: '纵向裂痕', color: '#FFA500'},
+                '2': {label: '纵向修补', color: '#FFD700'},
+                '3': {label: '井盖', color: '#4169E1'},
+                '4': {label: '坑洼', color: '#FF0000'},
+                '5': {label: '横向裂缝', color: '#FF8C00'},
+                '6': {label: '横向修补', color: '#DAA520'},
+                // 英文类型映射（兼容旧数据，包含所有可能的变体）
+                // 网状裂痕
+                'Alligator Crack': {label: '网状裂痕', color: '#FF6B6B'},
+                'Alligator': {label: '网状裂痕', color: '#FF6B6B'},
+                // 纵向裂痕
+                'Longitudinal Crack': {label: '纵向裂痕', color: '#FFA500'},
+                'Longitudinal': {label: '纵向裂痕', color: '#FFA500'},
+                // 纵向修补
+                'Longitudinal Patch': {label: '纵向修补', color: '#FFD700'},
+                'Long_Patch': {label: '纵向修补', color: '#FFD700'},
+                // 井盖
+                'Manhole Cover': {label: '井盖', color: '#4169E1'},
+                'Manhole': {label: '井盖', color: '#4169E1'},
+                // 坑洼
+                'Pothole': {label: '坑洼', color: '#FF0000'},
+                // 横向裂缝
+                'Transverse Crack': {label: '横向裂缝', color: '#FF8C00'},
+                'Transverse': {label: '横向裂缝', color: '#FF8C00'},
+                // 横向修补
+                'Transverse Patch': {label: '横向修补', color: '#DAA520'},
+                'Trans_Patch': {label: '横向修补', color: '#DAA520'}
+            };
+
+            // 存储所有标记
+            const markers = [];
+            let map = null;
+
+            // 初始化地图
+            function initMap() {
+                console.log('开始初始化地图');
+                
+                map = new AMap.Map('container', {
+                    resizeEnable: true,
+                    zoom: 17,
+                    center: [116.95802472124181,35.55071146160312],
+                    mapStyle: 'amap://styles/normal'
+                });
+
+                console.log('地图初始化完成');
+            }
+
+            // 加载风险点数据
+            async function loadRiskPoints() {
+                try {
+                    console.log('开始加载风险点数据');
+                    const response = await fetch('/api/risks');
+                    const result = await response.json();
+                    
+                    console.log('风险点数据:', result);
+                    
+                    if (result.success && result.data.length > 0) {
+                        displayRiskPoints(result.data);
+                    } else {
+                        document.getElementById('risk-list').innerHTML = 
+                            '<p style="text-align: center; color: #999; padding: 20px;">暂无风险点数据</p>';
+                    }
+                } catch (error) {
+                    console.error('加载风险点失败:', error);
+                    document.getElementById('risk-list').innerHTML = 
+                        '<p style="text-align: center; color: #f44336;">加载失败</p>';
+                }
+            }
+
+            // 显示风险点
+            function displayRiskPoints(risks) {
+                console.log('显示风险点，数量:', risks.length);
+
+                // 清空旧标记
+                markers.forEach(marker => marker.setMap(null));
+                markers.length = 0;
+
+                // 统计数量 - 根据实际风险类型统计
+                let stats = {
+                    total: risks.length,
+                    '网状裂痕': 0,
+                    '纵向裂痕': 0,
+                    '纵向修补': 0,
+                    '井盖': 0,
+                    '坑洼': 0,
+                    '横向裂缝': 0,
+                    '横向修补': 0
+                };
+
+                // 风险点列表 HTML
+                let listHtml = '';
+
+                // 遍历所有风险点
+                risks.forEach((risk, index) => {
+                    // 获取配置，如果找不到则使用默认值
+                    const config = riskTypeConfig[risk.risk_type] || {label: risk.risk_type, color: '#667eea'};
+                    
+                    // 统计 - 使用中文标签作为键
+                    if (config.label in stats) {
+                        stats[config.label]++;
+                    }
+
+                    // 添加地图标记
+                    addMarker(risk, index);
+
+                    // 添加到列表
+                    listHtml += `
+                        <div class="risk-item" onclick="focusOnRisk(${index})">
+                            <div class="risk-item-header">
+                                <span class="risk-type" style="color: ${config.color}">${config.label}</span>
+                                <span class="risk-id">#${risk.id}</span>
+                            </div>
+                            <div class="risk-location">
+                                纬度：${risk.latitude.toFixed(6)}, 经度：${risk.longitude.toFixed(6)}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                // 更新统计 - 使用中文显示
+                document.getElementById('total-count').textContent = stats.total;
+                document.getElementById('alligator-count').textContent = stats['网状裂痕'];
+                document.getElementById('longitudinal-crack-count').textContent = stats['纵向裂痕'];
+                document.getElementById('longitudinal-patch-count').textContent = stats['纵向修补'];
+                document.getElementById('manhole-count').textContent = stats['井盖'];
+                document.getElementById('pothole-count').textContent = stats['坑洼'];
+                document.getElementById('transverse-crack-count').textContent = stats['横向裂缝'];
+                document.getElementById('transverse-patch-count').textContent = stats['横向修补'];
+
+                // 更新列表
+                document.getElementById('risk-list').innerHTML = listHtml;
+
+                // 调整地图视野以显示所有标记
+                if (markers.length > 0) {
+                    map.setFitView();
+                }
+            }
+
+            // 添加标记到地图
+            function addMarker(risk, index) {
+                const config = riskTypeConfig[risk.risk_type] || {label: risk.risk_type, color: '#667eea'};
+                
+                // 创建标记
+                const marker = new AMap.Marker({
+                    position: [risk.longitude, risk.latitude],
+                    map: map,
+                    title: config.label,
+                    extData: risk
+                });
+
+                // 添加信息窗体
+                const infoWindow = new AMap.InfoWindow({
+                    content: `
+                        <div style="padding: 10px;">
+                            <h3 style="margin: 0 0 10px 0; color: ${config.color}">${config.label}</h3>
+                            <p style="margin: 5px 0; font-size: 14px;">
+                                <strong>坐标:</strong> ${risk.latitude.toFixed(6)}, ${risk.longitude.toFixed(6)}
+                            </p>
+                            <p style="margin: 5px 0; font-size: 12px; color: #666;">
+                                <strong>ID:</strong> ${risk.id}
+                            </p>
+                        </div>
+                    `,
+                    offset: new AMap.Pixel(0, -30)
+                });
+
+                // 点击事件
+                marker.on('click', function() {
+                    infoWindow.open(map, marker.getPosition());
+                });
+
+                markers.push(marker);
+                console.log('添加标记:', index, config.label);
+            }
+
+            // 聚焦到指定风险点
+            window.focusOnRisk = function(index) {
+                if (markers[index]) {
+                    map.setZoomAndCenter(18, markers[index].getPosition());
+                    markers[index].setAnimation('AMAP_ANIMATION_BOUNCE');
+                    
+                    // 3 秒后停止动画
+                    setTimeout(() => {
+                        markers[index].setAnimation(null);
+                    }, 3000);
+                }
+            };
+
+            // 初始化
+            initMap();
+            loadRiskPoints();
+        });
+    </script>
+</body>
+</html>

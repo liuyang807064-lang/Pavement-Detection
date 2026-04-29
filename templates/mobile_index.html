@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>骑行路面检测与实时预警系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+            padding-bottom: 20px;
+        }
+
+        /* 顶部导航 */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        /* 功能按钮区域 */
+        .mobile-buttons {
+            padding: 1rem;
+        }
+
+        .btn-group {
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            background: white;
+            color: #333;
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 0.8rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn i {
+            display: inline-block;
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        /* 用户区域 */
+        .user-section {
+            padding: 1rem;
+            background: white;
+            border-radius: 12px;
+            margin: 1rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .user-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .login-btn {
+            background: #667eea;
+            color: white;
+        }
+
+        .register-btn {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+        }
+
+        /* 底部信息 */
+        .footer {
+            text-align: center;
+            padding: 1rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.8rem;
+            position: relative;
+            top: 20px;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 480px) {
+            .btn {
+                padding: 0.9rem;
+                font-size: 0.95rem;
+            }
+            
+            .user-actions {
+                flex-direction: column;
+            }
+            
+            .user-btn {
+                padding: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部标题 -->
+    <div class="header">
+        <h1>骑行路面检测与实时预警系统</h1>
+    </div>
+
+    <!-- 功能按钮 -->
+    <div class="mobile-buttons">
+        <div class="btn-group">
+            <a href="/realtime-detection" class="btn">
+                <span>🔍</span> 骑行路面检测与预警
+            </a>
+            <a href="/map-view" class="btn">
+                <span>🗺️</span> 骑行路况地图
+            </a>
+        </div>
+        
+        <div class="btn-group">
+            <a href="/realtime-detection" class="btn">
+                <span>📊</span> 路面数据统计分析
+            </a>
+            <a href="/report" class="btn">
+                <span>⚠️</span> 危险路段上报 (骑行)
+            </a>
+        </div>
+    </div>
+
+    <!-- 用户操作区域 -->
+    <div class="user-section">
+        <div class="user-actions">
+            <button class="user-btn login-btn">登录</button>
+            <button class="user-btn register-btn">注册</button>
+        </div>
+    </div>
+
+    <!-- 底部信息 -->
+    <div class="footer">
+        © 2026 骑行路面检测与实时预警系统
+    </div>
+
+    <script>
+        // 简单的点击效果
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 200);
+            });
+        });
+
+        document.querySelector('.login-btn').addEventListener('click', function() {
+            alert('请访问 /login 页面登录');
+        });
+
+        document.querySelector('.register-btn').addEventListener('click', function() {
+            alert('请访问 /register 页面注册');
+        });
+    </script>
+</body>
+</html>
